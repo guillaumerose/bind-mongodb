@@ -190,8 +190,17 @@ mongodb_authority(const char *zone, void *dbdata, dns_sdblookup_t *lookup) {
 
 	UNUSED(zone);
 	UNUSED(dbdata);
+  
+  time_t rawtime;
+  struct tm *timeinfo;
+  char buffer[11];
 
-	result = dns_sdb_putsoa(lookup, "localhost.", "root.localhost.", 2010080201); //  YYYYMMDDXX
+  time(&rawtime);
+  timeinfo = localtime(&rawtime);
+
+  strftime(buffer, 11, "%Y%m%d01", timeinfo);
+  
+	result = dns_sdb_putsoa(lookup, "localhost.", "root.localhost.", atoi(buffer)); //  YYYYMMDDXX
 	if (result != ISC_R_SUCCESS)
 		return (ISC_R_FAILURE);
 
