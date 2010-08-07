@@ -75,8 +75,8 @@ TEST_INCLUDES = \
 #
 # Add database drivers here.
 #
-DBDRIVER_OBJS = timedb.o bson.o md5.o mongo.o numbers.o 
-DBDRIVER_SRCS = timedb.c bson.c md5.c mongo.c numbers.c 
+DBDRIVER_OBJS = timedb.o bson.o md5.o mongo.o numbers.o gridfs.o
+DBDRIVER_SRCS = timedb.c bson.c md5.c mongo.c numbers.c gridfs.c
 DBDRIVER_INCLUDES = --std=c99 
 DBDRIVER_LIBS = 
 

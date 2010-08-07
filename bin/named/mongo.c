@@ -39,7 +39,11 @@ static const int one = 1;
 static void looping_write(mongo_connection * conn, const void* buf, int len){
     const char* cbuf = buf;
     while (len){
-        int sent = send(conn->sock, cbuf, len, MSG_NOSIGNAL);
+#ifdef __APPLE__
+        int sent = send(conn->sock, cbuf, len, 0);
+#else
+        int sent = send(conn->sock, cbuf, len, MSG_NOSIGNAL);	
+#endif
         if (sent == -1) MONGO_THROW(MONGO_EXCEPT_NETWORK);
         cbuf += sent;
         len -= sent;
@@ -49,7 +53,11 @@ static void looping_write(mongo_connection * conn, const void* buf, int len){
 static void looping_read(mongo_connection * conn, void* buf, int len){
     char* cbuf = buf;
     while (len){
-        int sent = recv(conn->sock, cbuf, len, MSG_NOSIGNAL);
+#ifdef __APPLE__
+        int sent = recv(conn->sock, cbuf, len, 0);
+#else
+        int sent = recv(conn->sock, cbuf, len, MSG_NOSIGNAL);	
+#endif
         if (sent == 0 || sent == -1) MONGO_THROW(MONGO_EXCEPT_NETWORK);
         cbuf += sent;
         len -= sent;
@@ -130,6 +138,12 @@ static int mongo_connect_helper( mongo_connection * conn ){
 
     /* nagle */
     setsockopt( conn->sock, IPPROTO_TCP, TCP_NODELAY, (char *) &one, sizeof(one) );
+
+    /* Handle disconnect at runtime */
+
+#ifdef __APPLE__
+    setsockopt(conn->sock, SOL_SOCKET, SO_NOSIGPIPE, (char *)&one, sizeof(one));
+#endif
 
     /* TODO signals */
 
@@ -317,7 +331,7 @@ mongo_reply * mongo_read_response( mongo_connection * conn ){
 
 mongo_cursor* mongo_find(mongo_connection* conn, const char* ns, bson* query, bson* fields, int nToReturn, int nToSkip, int options){
     int sl;
-    mongo_cursor * cursor;
+    volatile mongo_cursor * cursor; /* volatile due to longjmp in mongo exception handler */
     char * data;
     mongo_message * mm = mongo_message_create( 16 + /* header */
                                                4 + /*  options */
@@ -346,7 +360,7 @@ mongo_cursor* mongo_find(mongo_connection* conn, const char* ns, bson* query, bs
     MONGO_TRY{
         cursor->mm = mongo_read_response(conn);
     }MONGO_CATCH{
-        free(cursor);
+        free((mongo_cursor*)cursor); /* cast away volatile, not changing type */
         MONGO_RETHROW();
     }
 
@@ -354,13 +368,13 @@ mongo_cursor* mongo_find(mongo_connection* conn, const char* ns, bson* query, bs
     cursor->ns = bson_malloc(sl);
     if (!cursor->ns){
         free(cursor->mm);
-        free(cursor);
+        free((mongo_cursor*)cursor); /* cast away volatile, not changing type */
         return 0;
     }
     memcpy((void*)cursor->ns, ns, sl); /* cast needed to silence GCC warning */
     cursor->conn = conn;
     cursor->current.data = NULL;
-    return cursor;
+    return (mongo_cursor*)cursor;
 }
 
 bson_bool_t mongo_find_one(mongo_connection* conn, const char* ns, bson* query, bson* fields, bson* out){

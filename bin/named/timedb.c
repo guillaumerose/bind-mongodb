@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <time.h>
 
+#include <isc/mem.h>
 #include <isc/print.h>
 #include <isc/result.h>
 #include <isc/util.h>
@@ -41,35 +42,35 @@
 
 #define	MONGO_STRING_LENGTH	8196
 
-#define MONGO_HOST		"127.0.0.1"
-#define MONGO_PORT		27017
-#define MONGO_BASE		"production.users"
-
-#define MONGO_SEARCH_FIELD	"dns"
-#define MONGO_MAC_FIELD		"dns"
-#define MONGO_DHCP_FIELD	"ip"
-
 static dns_sdbimplementation_t *timedb = NULL;
 
 mongo_connection conn[1];
 mongo_connection_options opts;
 
-char *mongo_host = MONGO_HOST,
-     *mongo_base = MONGO_BASE,
-     *mongo_mac_field = MONGO_MAC_FIELD,
-     *mongo_dhcp_field = MONGO_DHCP_FIELD;
-
-int mongo_port = MONGO_PORT;
+typedef struct _dbinfo {
+    char *host;
+    char *port;
+    char *base;
+    
+    char *search;
+    
+    char *dns;
+    char *ip;
+    
+    char *request_type;
+} dbinfo_t;
 
 int
-mongo_start() 
+mongo_start(void *dbdata) 
 {	
-	strncpy(opts.host, mongo_host, 255);
+	dbinfo_t *dbi = (dbinfo_t *) dbdata;
+	
+	strncpy(opts.host, dbi->host, 255);
 	opts.host[254] = '\0';
-	opts.port = mongo_port;
+	opts.port = atoi(dbi->port);
 
 	if (mongo_connect(conn, &opts)){
-		printf("Failed to connect\n");
+		printf("Failed to connect to %s:%s\n", dbi->host, dbi->port);
 		return 0;
 	}
 	
@@ -78,7 +79,7 @@ mongo_start()
 }
 
 void 
-find_in_array(bson_iterator *it, char *key_ref, char *value_ref, char *key_needed, char *value_needed) 
+find_in_array(bson_iterator *it, const char *key_ref, const char *value_ref, const char *key_needed, char *value_needed) 
 {
 	char value_ref_found[MONGO_STRING_LENGTH];
 	char value_needed_found[MONGO_STRING_LENGTH];
@@ -108,8 +109,10 @@ find_in_array(bson_iterator *it, char *key_ref, char *value_ref, char *key_neede
 }
 
 int 
-find_dhcp_options(char *mac, char *dhcp) 
+find_dhcp_options(void *dbdata, const char *mac, char *dhcp) 
 {
+	dbinfo_t *dbi = (dbinfo_t *) dbdata;
+	
 	bson_buffer bb;
 	
 	bson query;
@@ -117,7 +120,7 @@ find_dhcp_options(char *mac, char *dhcp)
 	bson result;
 	
 	bson_buffer_init(&bb);
-	bson_append_string(&bb, MONGO_SEARCH_FIELD, mac);
+	bson_append_string(&bb, dbi->search, mac);
 
 	bson_append_finish_object(&bb);
 	bson_from_buffer(&query, &bb);
@@ -126,19 +129,23 @@ find_dhcp_options(char *mac, char *dhcp)
 
 	bson_empty(&result);
 
+	printf("Searching %s in schema %s => %s, %s => ?\n", mac, dbi->dns, mac, dbi->ip);
+	
 	MONGO_TRY{
-		if (mongo_find_one(conn, MONGO_BASE, &query, &field, &result) == 0) {
+		if (mongo_find_one(conn, dbi->base, &query, &field, &result) == 0) {
 			return 0;
 		}
 	}MONGO_CATCH{
-		mongo_start();
+		mongo_start(dbdata);
 		return 0;
 	}
 	
 	bson_iterator it;
 	bson_iterator_init(&it, result.data);
 	
-	find_in_array(&it, MONGO_MAC_FIELD, mac, MONGO_DHCP_FIELD, dhcp);
+	printf("Parsing...\n");
+	
+	find_in_array(&it, dbi->dns, mac, dbi->ip, dhcp);
 	return 1;
 }
 
@@ -149,21 +156,22 @@ find_dhcp_options(char *mac, char *dhcp)
  * "clock" is a CNAME to "time"
  * "current" is a DNAME to "@" (try time.current.time)
  */ 
-isc_result_t
+static isc_result_t
 timedb_lookup(const char *zone, const char *name, void *dbdata,
 	      dns_sdblookup_t *lookup)
 {
+	dbinfo_t *dbi = (dbinfo_t *) dbdata;
 	isc_result_t result;
 
 	UNUSED(zone);
 	UNUSED(dbdata);
 	
 	char option_buffer[MONGO_STRING_LENGTH] = "";
-	find_dhcp_options(name, option_buffer);
+	find_dhcp_options(dbdata, name, option_buffer);
 	
 	if (strcmp(option_buffer, "") != 0) {
 		printf("Entrée DNS trouvée pour %s : %s\n", name, option_buffer);
-		result = dns_sdb_putrr(lookup, "A", 86400, option_buffer);
+		result = dns_sdb_putrr(lookup, dbi->request_type, 86400, option_buffer);
 		if (result != ISC_R_SUCCESS)
 			return (ISC_R_FAILURE);
 	} else {
@@ -197,6 +205,63 @@ timedb_authority(const char *zone, void *dbdata, dns_sdblookup_t *lookup) {
 	return (ISC_R_SUCCESS);
 }
 
+#define STRDUP_OR_FAIL(target, source)				\
+	do {							\
+		target = isc_mem_strdup(ns_g_mctx, source);	\
+		if (target == NULL) {				\
+			result = ISC_R_NOMEMORY;		\
+			goto cleanup;				\
+		}						\
+	} while (0);
+
+
+static isc_result_t
+timedb_create(const char *zone,
+		int argc, char **argv,
+		void *driverdata, void **dbdata)
+{
+    dbinfo_t *dbi;
+    isc_result_t result;
+
+    UNUSED(zone);
+    UNUSED(driverdata);
+
+    if (argc < 2)
+			return (ISC_R_FAILURE);
+	
+	  printf("argv[0] = %s\n", argv[0]);
+    printf("argv[1] = %s\n", argv[1]);
+
+    dbi = isc_mem_get(ns_g_mctx, sizeof(dbinfo_t));
+    if (dbi == NULL)
+			return (ISC_R_NOMEMORY);
+
+    dbi->host 		= NULL;
+    dbi->port    	= NULL;
+		dbi->request_type = NULL;
+		dbi->base 		= NULL;
+    dbi->search   = NULL;
+    dbi->dns 			= NULL;
+    dbi->ip    		= NULL;
+    
+    STRDUP_OR_FAIL(dbi->host, argv[0]);
+    STRDUP_OR_FAIL(dbi->port, argv[1]);
+    STRDUP_OR_FAIL(dbi->request_type, argv[2]);
+    STRDUP_OR_FAIL(dbi->base, argv[3]);
+    STRDUP_OR_FAIL(dbi->search, argv[4]);
+    STRDUP_OR_FAIL(dbi->dns, argv[5]);
+    STRDUP_OR_FAIL(dbi->ip, argv[6]);
+    
+    *dbdata = dbi;
+    
+    mongo_start(dbi);
+  
+    return (ISC_R_SUCCESS);
+
+cleanup:
+    return (result);
+}
+
 /*
  * This zone does not support zone transfer, so allnodes() is NULL.  There
  * is no database specific data, so create() and destroy() are NULL.
@@ -205,7 +270,7 @@ static dns_sdbmethods_t timedb_methods = {
 	timedb_lookup,
 	timedb_authority,
 	NULL,	/* allnodes */
-	NULL,	/* create */
+	timedb_create,	/* create */
 	NULL	/* destroy */
 };
 
@@ -214,8 +279,6 @@ static dns_sdbmethods_t timedb_methods = {
  */
 isc_result_t
 timedb_init(void) {
-	mongo_start();
-
 	unsigned int flags;
 	flags = DNS_SDBFLAG_RELATIVEOWNER | DNS_SDBFLAG_RELATIVERDATA;
 	return (dns_sdb_register("time", &timedb_methods, NULL, flags,
