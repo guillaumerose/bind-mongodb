@@ -63,6 +63,22 @@ typedef struct _dbinfo {
     char *result_suffix;
 } dbinfo_t;
 
+static void mongodb_lock(int what) {
+	static isc_mutex_t lock;
+
+	switch (what) {
+	case 0:
+		isc_mutex_init(&lock);
+		break;
+	case 1:
+		LOCK(&lock);
+		break;
+	case -1:
+		UNLOCK(&lock);
+		break;
+	}
+}
+
 int
 mongo_start(void *dbdata) 
 {	
@@ -132,6 +148,8 @@ find_bind_options(void *dbdata, const char *mac, char *dhcp)
 
 	printf("Searching %s in schema %s => %s, %s => ?\n", mac, dbi->dns, mac, dbi->ip);
 	
+	mongodb_lock(1);
+	
 	MONGO_TRY{
 		if (mongo_find_one(conn, dbi->base, &query, &field, &result) == 0) {
 			return 0;
@@ -140,6 +158,8 @@ find_bind_options(void *dbdata, const char *mac, char *dhcp)
 		mongo_start(dbdata);
 		return 0;
 	}
+	
+	mongodb_lock(-1);
 	
 	bson_iterator it;
 	bson_iterator_init(&it, result.data);
@@ -315,6 +335,9 @@ isc_result_t
 mongodb_init(void) {
 	unsigned int flags;
 	flags = DNS_SDBFLAG_RELATIVEOWNER | DNS_SDBFLAG_RELATIVERDATA;
+	
+	mongodb_lock(0);
+	
 	return (dns_sdb_register("mongo", &mongodb_methods, NULL, flags,
 				 ns_g_mctx, &mongodb));
 }
