@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2004, 2007  Internet Systems Consortium, Inc. ("ISC")
- * Copyright (C) 2000, 2001  Internet Software Consortium.
+ * Copyright (C) 2010 Guillaume Rose <guillaume.rose@gmail.com>
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -15,11 +14,8 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: mongodb.c,v 1.10 2007/06/19 23:47:10 tbox Exp $ */
-
 /*
- * A simple database driver that enables the server to return the
- * current time in a DNS record.
+ * A simple database driver that uses MongoDB
  */
 
 #include <config.h>
