@@ -32,6 +32,7 @@
 #include <isc/print.h>
 #include <isc/result.h>
 #include <isc/util.h>
+#include <isc/thread.h>
 
 #include <dns/sdb.h>
 
@@ -44,8 +45,42 @@
 
 static dns_sdbimplementation_t *mongodb = NULL;
 
-mongo_connection conn[1];
-mongo_connection_options opts;
+typedef struct list {
+	unsigned long thread_id;
+	mongo_connection *conn;
+	mongo_connection_options opts;
+	struct list * next;
+} item;
+
+item *enlister(item *head, unsigned long thread_id, mongo_connection *conn, mongo_connection_options opts) {
+	item *current = malloc(sizeof(item));
+	current->thread_id = thread_id;
+	current->conn = conn;
+	current->opts = opts;
+
+	if (head == NULL) {
+		return current;
+	}
+
+	item *iterator = head;
+	while(iterator->next != NULL) {
+		iterator = iterator->next;
+	}
+	
+	iterator->next = current;
+	
+	return head;
+}
+
+item *chercher(item *head, unsigned long i) {
+	item *iterator = head;
+	while(iterator != NULL && iterator->thread_id != i) {
+		iterator = iterator->next;
+	}
+	return iterator;
+}
+
+item *connection_list = NULL;
 
 typedef struct _dbinfo {
     char *host;
@@ -82,16 +117,21 @@ static void mongodb_lock(int what) {
 int
 mongo_start(void *dbdata) 
 {	
+	mongo_connection *conn = malloc(10 * sizeof(mongo_connection));
+	mongo_connection_options opts;
+
 	dbinfo_t *dbi = (dbinfo_t *) dbdata;
 	
 	strncpy(opts.host, dbi->host, 255);
 	opts.host[254] = '\0';
 	opts.port = atoi(dbi->port);
-
+	
 	if (mongo_connect(conn, &opts)){
 		printf("Failed to connect to %s:%s\n", dbi->host, dbi->port);
 		return 0;
 	}
+	
+	connection_list = enlister(connection_list, isc_thread_self(), conn, opts);
 	
 	printf("Connected to MongoDB\n");
 	return 1;
@@ -130,6 +170,11 @@ find_in_array(bson_iterator *it, const char *key_ref, const char *value_ref, con
 int 
 find_bind_options(void *dbdata, const char *mac, char *dhcp) 
 {
+	item *connection = chercher(connection_list, isc_thread_self());
+	
+	mongo_connection *conn = connection->conn;
+	mongo_connection_options opts = connection->opts;
+
 	dbinfo_t *dbi = (dbinfo_t *) dbdata;
 	
 	bson_buffer bb;
@@ -147,9 +192,7 @@ find_bind_options(void *dbdata, const char *mac, char *dhcp)
 	bson_empty(&result);
 
 	printf("Searching %s in schema %s => %s, %s => ?\n", mac, dbi->dns, mac, dbi->ip);
-	
-	mongodb_lock(1);
-	
+
 	MONGO_TRY{
 		if (mongo_find_one(conn, dbi->base, &query, &field, &result) == 0) {
 			return 0;
@@ -158,9 +201,7 @@ find_bind_options(void *dbdata, const char *mac, char *dhcp)
 		mongo_start(dbdata);
 		return 0;
 	}
-	
-	mongodb_lock(-1);
-	
+
 	bson_iterator it;
 	bson_iterator_init(&it, result.data);
 	
@@ -310,10 +351,7 @@ mongodb_destroy(const char *zone, void *driverdata, void **dbdata)
     UNUSED(driverdata);
 		UNUSED(dbdata);
 		
-    MONGO_TRY{
-			mongo_destroy(conn);
-		}MONGO_CATCH{
-		}
+    //mongo_destroy(conn);
 }
 
 /*
