@@ -7,6 +7,7 @@ Warning : authority section is static
 Install :
 
 * Modify conf/named.conf to match your configuration
+* Modifiy SOA record in bin/named/mongodb.c in authority function
 * Build as usual
   * ./configure
   * make
