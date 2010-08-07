@@ -60,5 +60,22 @@ zone "myzone.eu" {
    database "time 127.0.0.1 27017 A production.users dns dns ip";
 };
 
+Reverse dns and data dpulication
+
+To avoid duplication you can declare your zones like this :
+
+zone "zone.fr" {
+	 type master;
+   database "mongo 127.0.0.1 27017 A production.users computers.dns dns ip";
+};
+
+zone "0.168.192.in-addr.arpa" {
+	 type master;
+   database "mongo 127.0.0.1 27017 PTR production.users computers.ip ip dns 192.168.0. .zone.fr."; 
+};
+
+192.168.0. is the search prefix. (query : { "computers.ip" : "192.168.0.8" })
+.zone.fr. is the suffix added to result
+
 (c) Guillaume Rose
 Under the same licence as Bind
