@@ -671,8 +671,8 @@ configure:21112: $? = 0
 configure:21127: result: yes
 configure:21137: checking for sysctlbyname
 configure:21193: gcc -o conftest -g -O2  -D_GNU_SOURCE  conftest.c  >&5
-/tmp/ccc5fTV1.o: In function `main':
-/home/guillaume/Téléchargements/bind-9.7.1-P2/conftest.c:61: undefined reference to `sysctlbyname'
+/tmp/cco7jixC.o: In function `main':
+/home/guillaume/github/bind-9.7.1-P2/conftest.c:61: undefined reference to `sysctlbyname'
 collect2: ld returned 1 exit status
 configure:21200: $? = 1
 configure: failed program was:
@@ -1188,8 +1188,8 @@ configure: failed program was:
 configure:22270: result: no
 configure:22290: checking for kqueue
 configure:22346: gcc -o conftest -g -O2  -D_GNU_SOURCE  conftest.c  >&5
-/tmp/cchl2BEN.o: In function `main':
-/home/guillaume/Téléchargements/bind-9.7.1-P2/conftest.c:69: undefined reference to `kqueue'
+/tmp/ccZAQTbt.o: In function `main':
+/home/guillaume/github/bind-9.7.1-P2/conftest.c:69: undefined reference to `kqueue'
 collect2: ld returned 1 exit status
 configure:22353: $? = 1
 configure: failed program was:
@@ -1537,8 +1537,8 @@ configure:24102: checking for /dev/random
 configure:24119: result: yes
 configure:24152: checking for arc4random
 configure:24208: gcc -o conftest -g -O2  -D_GNU_SOURCE  conftest.c  >&5
-/tmp/ccV8Ce1X.o: In function `main':
-/home/guillaume/Téléchargements/bind-9.7.1-P2/conftest.c:73: undefined reference to `arc4random'
+/tmp/ccFcLnhR.o: In function `main':
+/home/guillaume/github/bind-9.7.1-P2/conftest.c:73: undefined reference to `arc4random'
 collect2: ld returned 1 exit status
 configure:24215: $? = 1
 configure: failed program was:
@@ -2390,8 +2390,8 @@ configure: failed program was:
 configure:28750: result: not match any subspecies; assume standard definition
 configure:28760: checking for getipnodebyname
 configure:28816: gcc -o conftest -g -O2 -I/usr/include/libxml2  -D_GNU_SOURCE  conftest.c  -lxml2 >&5
-/tmp/ccM7PRCl.o: In function `main':
-/home/guillaume/Téléchargements/bind-9.7.1-P2/conftest.c:83: undefined reference to `getipnodebyname'
+/tmp/ccA3GjeL.o: In function `main':
+/home/guillaume/github/bind-9.7.1-P2/conftest.c:83: undefined reference to `getipnodebyname'
 collect2: ld returned 1 exit status
 configure:28823: $? = 1
 configure: failed program was:
@@ -2515,8 +2515,8 @@ configure:29600: $? = 0
 configure:29620: result: yes
 configure:29636: checking for strlcpy
 configure:29692: gcc -o conftest -g -O2 -I/usr/include/libxml2  -D_GNU_SOURCE  conftest.c  -lxml2 >&5
-/tmp/ccCudMg4.o: In function `main':
-/home/guillaume/Téléchargements/bind-9.7.1-P2/conftest.c:86: undefined reference to `strlcpy'
+/tmp/cc13Nr38.o: In function `main':
+/home/guillaume/github/bind-9.7.1-P2/conftest.c:86: undefined reference to `strlcpy'
 collect2: ld returned 1 exit status
 configure:29699: $? = 1
 configure: failed program was:
@@ -2612,8 +2612,8 @@ configure: failed program was:
 configure:29719: result: no
 configure:29729: checking for strlcat
 configure:29785: gcc -o conftest -g -O2 -I/usr/include/libxml2  -D_GNU_SOURCE  conftest.c  -lxml2 >&5
-/tmp/cc63hr0q.o: In function `main':
-/home/guillaume/Téléchargements/bind-9.7.1-P2/conftest.c:86: undefined reference to `strlcat'
+/tmp/ccG0lUos.o: In function `main':
+/home/guillaume/github/bind-9.7.1-P2/conftest.c:86: undefined reference to `strlcat'
 collect2: ld returned 1 exit status
 configure:29792: $? = 1
 configure: failed program was:
@@ -3242,15 +3242,15 @@ ALWAYS_DEFINES=''
 ALWAYS_MAKE_SYMTABLE=''
 AR='/usr/bin/ar'
 ARFLAGS='cruv'
-BIND9_BIND9_BUILDINCLUDE='-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/bind9/include'
+BIND9_BIND9_BUILDINCLUDE='-I/home/guillaume/github/bind-9.7.1-P2/lib/bind9/include'
 BIND9_CONFIGARGS='CONFIGARGS=defaults'
 BIND9_CO_RULE='.c.o:'
-BIND9_DNS_BUILDINCLUDE='-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/dns/include'
-BIND9_ISCCC_BUILDINCLUDE='-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isccc/include'
-BIND9_ISCCFG_BUILDINCLUDE='-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isccfg/include'
-BIND9_ISC_BUILDINCLUDE='-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isc/include'
-BIND9_LWRES_BUILDINCLUDE='-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/lwres/include'
-BIND9_TOP_BUILDDIR='/home/guillaume/Téléchargements/bind-9.7.1-P2'
+BIND9_DNS_BUILDINCLUDE='-I/home/guillaume/github/bind-9.7.1-P2/lib/dns/include'
+BIND9_ISCCC_BUILDINCLUDE='-I/home/guillaume/github/bind-9.7.1-P2/lib/isccc/include'
+BIND9_ISCCFG_BUILDINCLUDE='-I/home/guillaume/github/bind-9.7.1-P2/lib/isccfg/include'
+BIND9_ISC_BUILDINCLUDE='-I/home/guillaume/github/bind-9.7.1-P2/lib/isc/include'
+BIND9_LWRES_BUILDINCLUDE='-I/home/guillaume/github/bind-9.7.1-P2/lib/lwres/include'
+BIND9_TOP_BUILDDIR='/home/guillaume/github/bind-9.7.1-P2'
 BIND9_VERSION='VERSION=9.7.1-P2'
 BUILD_CC='gcc'
 BUILD_CFLAGS='-g -O2 -I/usr/include/libxml2'
@@ -3490,8 +3490,8 @@ target_alias=''
 ## File substitutions. ##
 ## ------------------- ##
 
-BIND9_MAKE_INCLUDES='/home/guillaume/Téléchargements/bind-9.7.1-P2/make/includes'
-BIND9_MAKE_RULES='/home/guillaume/Téléchargements/bind-9.7.1-P2/make/rules'
+BIND9_MAKE_INCLUDES='/home/guillaume/github/bind-9.7.1-P2/make/includes'
+BIND9_MAKE_RULES='/home/guillaume/github/bind-9.7.1-P2/make/rules'
 DLZ_DRIVER_RULES='/dev/null'
 LIBBIND9_API='./lib/bind9/api'
 LIBDNS_API='./lib/dns/api'

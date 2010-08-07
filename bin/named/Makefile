@@ -46,27 +46,27 @@ CONFIGARGS=defaults
 # latter case, because there are no machine-generated OS-specific
 # headers.
 
-ISC_INCLUDES = -I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isc/include \
+ISC_INCLUDES = -I/home/guillaume/github/bind-9.7.1-P2/lib/isc/include \
 	-I${top_srcdir}/lib/isc \
 	-I${top_srcdir}/lib/isc/include \
 	-I${top_srcdir}/lib/isc/unix/include \
 	-I${top_srcdir}/lib/isc/nothreads/include \
 	-I${top_srcdir}/lib/isc/x86_32/include
 
-ISCCC_INCLUDES = -I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isccc/include \
+ISCCC_INCLUDES = -I/home/guillaume/github/bind-9.7.1-P2/lib/isccc/include \
        -I${top_srcdir}/lib/isccc/include
 
-ISCCFG_INCLUDES = -I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isccfg/include \
+ISCCFG_INCLUDES = -I/home/guillaume/github/bind-9.7.1-P2/lib/isccfg/include \
        -I${top_srcdir}/lib/isccfg/include
 
-DNS_INCLUDES = -I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/dns/include \
+DNS_INCLUDES = -I/home/guillaume/github/bind-9.7.1-P2/lib/dns/include \
 	-I${top_srcdir}/lib/dns/include
 
-LWRES_INCLUDES = -I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/lwres/include \
+LWRES_INCLUDES = -I/home/guillaume/github/bind-9.7.1-P2/lib/lwres/include \
 	-I${top_srcdir}/lib/lwres/unix/include \
 	-I${top_srcdir}/lib/lwres/include
 
-BIND9_INCLUDES = -I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/bind9/include \
+BIND9_INCLUDES = -I/home/guillaume/github/bind-9.7.1-P2/lib/bind9/include \
 	-I${top_srcdir}/lib/bind9/include
 
 TEST_INCLUDES = \
@@ -77,7 +77,7 @@ TEST_INCLUDES = \
 #
 DBDRIVER_OBJS = mongodb.o bson.o md5.o mongo.o numbers.o gridfs.o
 DBDRIVER_SRCS = mongodb.c bson.c md5.c mongo.c numbers.c gridfs.c
-DBDRIVER_INCLUDES = --std=c99 
+DBDRIVER_INCLUDES = --std=c99
 DBDRIVER_LIBS = 
 
 DLZ_DRIVER_DIR =	${top_srcdir}/contrib/dlz/drivers
@@ -200,7 +200,7 @@ DESTDIR =
 
 
 
-top_builddir =	/home/guillaume/Téléchargements/bind-9.7.1-P2
+top_builddir =	/home/guillaume/github/bind-9.7.1-P2
 
 ###
 ### All

@@ -124,8 +124,6 @@ find_bind_options(void *dbdata, const char *mac, char *dhcp)
 	
 	bson_buffer_init(&bb);
 	bson_append_string(&bb, dbi->search, mac);
-
-	bson_append_finish_object(&bb);
 	bson_from_buffer(&query, &bb);
 	
 	bson_empty(&field);

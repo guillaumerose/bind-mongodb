@@ -362,7 +362,7 @@ Copyright (C) 2008 Free Software Foundation, Inc.
 This config.status script is free software; the Free Software Foundation
 gives unlimited permission to copy, distribute and modify it."
 
-ac_pwd='/home/guillaume/Téléchargements/bind-9.7.1-P2'
+ac_pwd='/home/guillaume/github/bind-9.7.1-P2'
 srcdir='.'
 INSTALL='/usr/bin/install -c'
 test -n "$AWK" || AWK=awk
@@ -655,8 +655,8 @@ fi
 
 echo 'BEGIN {' >"$tmp/subs1.awk" &&
 cat >>"$tmp/subs1.awk" <<\_ACAWK &&
-F["BIND9_MAKE_INCLUDES"]="/home/guillaume/Téléchargements/bind-9.7.1-P2/make/includes"
-F["BIND9_MAKE_RULES"]="/home/guillaume/Téléchargements/bind-9.7.1-P2/make/rules"
+F["BIND9_MAKE_INCLUDES"]="/home/guillaume/github/bind-9.7.1-P2/make/includes"
+F["BIND9_MAKE_RULES"]="/home/guillaume/github/bind-9.7.1-P2/make/rules"
 F["LIBISC_API"]="./lib/isc/api"
 F["LIBISCCC_API"]="./lib/isccc/api"
 F["LIBISCCFG_API"]="./lib/isccfg/api"
@@ -893,13 +893,13 @@ S["XSLT_DOCBOOK_MAKETOC_XHTML"]="xhtml/maketoc.xsl"
 S["XSLT_DB2LATEX_STYLE"]="db2latex/xsl/docbook.xsl"
 S["XSLT_DB2LATEX_ADMONITIONS"]="db2latex/xsl/figures"
 S["IDNLIBS"]=""
-S["BIND9_TOP_BUILDDIR"]="/home/guillaume/Téléchargements/bind-9.7.1-P2"
-S["BIND9_ISC_BUILDINCLUDE"]="-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isc/include"
-S["BIND9_ISCCC_BUILDINCLUDE"]="-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isccc/include"
-S["BIND9_ISCCFG_BUILDINCLUDE"]="-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isccfg/include"
-S["BIND9_DNS_BUILDINCLUDE"]="-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/dns/include"
-S["BIND9_LWRES_BUILDINCLUDE"]="-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/lwres/include"
-S["BIND9_BIND9_BUILDINCLUDE"]="-I/home/guillaume/Téléchargements/bind-9.7.1-P2/lib/bind9/include"
+S["BIND9_TOP_BUILDDIR"]="/home/guillaume/github/bind-9.7.1-P2"
+S["BIND9_ISC_BUILDINCLUDE"]="-I/home/guillaume/github/bind-9.7.1-P2/lib/isc/include"
+S["BIND9_ISCCC_BUILDINCLUDE"]="-I/home/guillaume/github/bind-9.7.1-P2/lib/isccc/include"
+S["BIND9_ISCCFG_BUILDINCLUDE"]="-I/home/guillaume/github/bind-9.7.1-P2/lib/isccfg/include"
+S["BIND9_DNS_BUILDINCLUDE"]="-I/home/guillaume/github/bind-9.7.1-P2/lib/dns/include"
+S["BIND9_LWRES_BUILDINCLUDE"]="-I/home/guillaume/github/bind-9.7.1-P2/lib/lwres/include"
+S["BIND9_BIND9_BUILDINCLUDE"]="-I/home/guillaume/github/bind-9.7.1-P2/lib/bind9/include"
 S["BIND9_VERSION"]="VERSION=9.7.1-P2"
 S["BIND9_CONFIGARGS"]="CONFIGARGS=defaults"
 S["PG_CONFIG"]=""

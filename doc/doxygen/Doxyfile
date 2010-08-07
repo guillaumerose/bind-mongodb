@@ -117,7 +117,7 @@ FULL_PATH_NAMES        = YES
 # If left blank the directory from which doxygen is run is used as the 
 # path to strip.
 
-STRIP_FROM_PATH        = /home/guillaume/Téléchargements/bind-9.7.1-P2/
+STRIP_FROM_PATH        = /home/guillaume/github/bind-9.7.1-P2/
 
 # The STRIP_FROM_INC_PATH tag can be used to strip a user-defined part of 
 # the path mentioned in the documentation of a class, which tells 
@@ -461,18 +461,18 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = /home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isc		\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/lib/dns		\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isccfg	\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/lib/isccc		\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/lib/bind9		\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/bin/check		\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/bin/dig		\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/bin/dnssec	\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/bin/named		\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/bin/nsupdate	\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/bin/rndc		\
-			 /home/guillaume/Téléchargements/bind-9.7.1-P2/doc/doxygen/mainpage
+INPUT                  = /home/guillaume/github/bind-9.7.1-P2/lib/isc		\
+			 /home/guillaume/github/bind-9.7.1-P2/lib/dns		\
+			 /home/guillaume/github/bind-9.7.1-P2/lib/isccfg	\
+			 /home/guillaume/github/bind-9.7.1-P2/lib/isccc		\
+			 /home/guillaume/github/bind-9.7.1-P2/lib/bind9		\
+			 /home/guillaume/github/bind-9.7.1-P2/bin/check		\
+			 /home/guillaume/github/bind-9.7.1-P2/bin/dig		\
+			 /home/guillaume/github/bind-9.7.1-P2/bin/dnssec	\
+			 /home/guillaume/github/bind-9.7.1-P2/bin/named		\
+			 /home/guillaume/github/bind-9.7.1-P2/bin/nsupdate	\
+			 /home/guillaume/github/bind-9.7.1-P2/bin/rndc		\
+			 /home/guillaume/github/bind-9.7.1-P2/doc/doxygen/mainpage
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 

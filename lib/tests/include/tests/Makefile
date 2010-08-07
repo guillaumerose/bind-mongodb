@@ -68,7 +68,7 @@ DESTDIR =
 
 
 
-top_builddir =	/home/guillaume/Téléchargements/bind-9.7.1-P2
+top_builddir =	/home/guillaume/github/bind-9.7.1-P2
 
 ###
 ### All
