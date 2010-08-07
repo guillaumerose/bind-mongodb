@@ -74,7 +74,7 @@
  * Include header files for database drivers here.
  */
 /* #include "xxdb.h" */
-#include "timedb.h"
+#include "mongodb.h"
 /*
  * Include DLZ drivers if appropriate.
  */
@@ -839,7 +839,7 @@ setup(void) {
 	 * Add calls to register sdb drivers here.
 	 */
 	/* xxdb_init(); */
-  timedb_init();
+  mongodb_init();
   
 #ifdef DLZ
 	/*
@@ -866,7 +866,7 @@ cleanup(void) {
 	 * Add calls to unregister sdb drivers here.
 	 */
 	/* xxdb_clear(); */
-  timedb_clear();
+  mongodb_clear();
   
 #ifdef DLZ
 	/*

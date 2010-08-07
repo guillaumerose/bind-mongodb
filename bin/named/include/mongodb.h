@@ -15,23 +15,11 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $Id: named.conf,v 1.16 2007/06/18 23:47:31 tbox Exp $ */
+/* $Id: mongodb.h,v 1.5 2007/06/19 23:47:13 tbox Exp $ */
 
-controls { /* empty */ };
+#include <isc/types.h>
 
-options {
-	directory "/var/cache/bind";
+isc_result_t mongodb_init(void);
 
-	// auth-nxdomain no;
-	listen-on-v6 { any; };
-};
+void mongodb_clear(void);
 
-zone "boxxy.fr" {
-	 type master;
-   database "mongo 127.0.0.1 27017 A production.users computers.dns dns ip";
-};
-
-zone "0.168.192.in-addr.arpa" {
-	 type master;
-   database "mongo 127.0.0.1 27017 PTR production.users computers.reverse reverse dns";
-};
