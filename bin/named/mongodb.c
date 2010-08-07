@@ -259,7 +259,20 @@ mongodb_create(const char *zone,
     return (ISC_R_SUCCESS);
 
 cleanup:
+    mongodb_destroy(zone, driverdata, (void **)&dbi);
     return (result);
+}
+
+void
+mongodb_destroy(const char *zone, void *driverdata, void **dbdata)
+{
+    UNUSED(zone);
+    UNUSED(driverdata);
+
+    MONGO_TRY{
+			mongo_destroy(conn);
+		}MONGO_CATCH{
+		}
 }
 
 /*
@@ -271,7 +284,7 @@ static dns_sdbmethods_t mongodb_methods = {
 	mongodb_authority,
 	NULL,	/* allnodes */
 	mongodb_create,	/* create */
-	NULL	/* destroy */
+	mongodb_destroy	/* destroy */
 };
 
 /*
