@@ -58,6 +58,9 @@ typedef struct _dbinfo {
     char *ip;
     
     char *request_type;
+    
+    char *search_prefix;
+    char *result_suffix;
 } dbinfo_t;
 
 int
@@ -109,7 +112,7 @@ find_in_array(bson_iterator *it, const char *key_ref, const char *value_ref, con
 }
 
 int 
-find_dhcp_options(void *dbdata, const char *mac, char *dhcp) 
+find_bind_options(void *dbdata, const char *mac, char *dhcp) 
 {
 	dbinfo_t *dbi = (dbinfo_t *) dbdata;
 	
@@ -143,8 +146,6 @@ find_dhcp_options(void *dbdata, const char *mac, char *dhcp)
 	bson_iterator it;
 	bson_iterator_init(&it, result.data);
 	
-	printf("Parsing...\n");
-	
 	find_in_array(&it, dbi->dns, mac, dbi->ip, dhcp);
 	return 1;
 }
@@ -166,11 +167,19 @@ mongodb_lookup(const char *zone, const char *name, void *dbdata,
 	UNUSED(zone);
 	UNUSED(dbdata);
 	
-	char option_buffer[MONGO_STRING_LENGTH] = "";
-	find_dhcp_options(dbdata, name, option_buffer);
+	if (strcmp(name, "@") == 0)
+		return (ISC_R_NOTFOUND);
+		
+	printf("Search prefix : \"%s\", result suffix : \"%s\"\n", dbi->search_prefix, dbi->result_suffix); 
 	
-	if (strcmp(option_buffer, "") != 0) {
-		printf("Entrée DNS trouvée pour %s : %s\n", name, option_buffer);
+	char reference[MONGO_STRING_LENGTH];
+	sprintf(reference, "%s%s", dbi->search_prefix, name);
+	
+	char option_buffer[MONGO_STRING_LENGTH] = "";
+
+	if (find_bind_options(dbdata, reference, option_buffer)) {
+		sprintf(option_buffer, "%s%s", option_buffer, dbi->result_suffix);
+		printf("DNS entry found for %s : %s\n", name, option_buffer);
 		result = dns_sdb_putrr(lookup, dbi->request_type, 86400, option_buffer);
 		if (result != ISC_R_SUCCESS)
 			return (ISC_R_FAILURE);
@@ -235,11 +244,8 @@ mongodb_create(const char *zone,
     UNUSED(zone);
     UNUSED(driverdata);
 
-    if (argc < 2)
+    if (argc < 7)
 			return (ISC_R_FAILURE);
-	
-	  printf("argv[0] = %s\n", argv[0]);
-    printf("argv[1] = %s\n", argv[1]);
 
     dbi = isc_mem_get(ns_g_mctx, sizeof(dbinfo_t));
     if (dbi == NULL)
@@ -252,6 +258,8 @@ mongodb_create(const char *zone,
     dbi->search   = NULL;
     dbi->dns 			= NULL;
     dbi->ip    		= NULL;
+    dbi->search_prefix   = "";
+    dbi->result_suffix   = "";
     
     STRDUP_OR_FAIL(dbi->host, argv[0]);
     STRDUP_OR_FAIL(dbi->port, argv[1]);
@@ -261,6 +269,11 @@ mongodb_create(const char *zone,
     STRDUP_OR_FAIL(dbi->dns, argv[5]);
     STRDUP_OR_FAIL(dbi->ip, argv[6]);
     
+    if (argc > 7) {
+    	 STRDUP_OR_FAIL(dbi->search_prefix, argv[7]);
+    	 STRDUP_OR_FAIL(dbi->result_suffix, argv[8]);
+    }
+    	    	 
     *dbdata = dbi;
     
     mongo_start(dbi);
@@ -277,7 +290,8 @@ mongodb_destroy(const char *zone, void *driverdata, void **dbdata)
 {
     UNUSED(zone);
     UNUSED(driverdata);
-
+		UNUSED(dbdata);
+		
     MONGO_TRY{
 			mongo_destroy(conn);
 		}MONGO_CATCH{

@@ -19,7 +19,14 @@
 
 #include <isc/types.h>
 
+#include "mongo.h"
+
 isc_result_t mongodb_init(void);
 
 void mongodb_clear(void);
+
+int mongo_start(void *);
+void find_in_array(bson_iterator *, const char *, const char *, const char *, char *);
+int find_bind_options(void *, const char *, char *);
+void mongodb_destroy(const char *, void *, void **);
 
