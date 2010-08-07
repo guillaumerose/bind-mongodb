@@ -43,44 +43,6 @@
 
 #define	MONGO_STRING_LENGTH	8196
 
-static dns_sdbimplementation_t *mongodb = NULL;
-
-typedef struct list {
-	unsigned long thread_id;
-	mongo_connection *conn;
-	mongo_connection_options opts;
-	struct list * next;
-} item;
-
-item *enlister(item *head, unsigned long thread_id, mongo_connection *conn, mongo_connection_options opts) {
-	item *current = malloc(sizeof(item));
-	current->thread_id = thread_id;
-	current->conn = conn;
-	current->opts = opts;
-
-	if (head == NULL) {
-		return current;
-	}
-
-	item *iterator = head;
-	while(iterator->next != NULL) {
-		iterator = iterator->next;
-	}
-	
-	iterator->next = current;
-	
-	return head;
-}
-
-item *chercher(item *head, unsigned long i) {
-	item *iterator = head;
-	while(iterator != NULL && iterator->thread_id != i) {
-		iterator = iterator->next;
-	}
-	return iterator;
-}
-
-item *connection_list = NULL;
 
 typedef struct _dbinfo {
     char *host;
@@ -96,7 +58,68 @@ typedef struct _dbinfo {
     
     char *search_prefix;
     char *result_suffix;
+    
+    char *zone;
 } dbinfo_t;
+
+typedef struct list {
+	char *zone;
+	mongo_connection *conn;
+	mongo_connection_options opts;
+	struct list * next;
+} item;
+
+static dns_sdbimplementation_t *mongodb = NULL;
+static item *connection_list = NULL;
+
+
+static item *enlister(item *head, char *zone, mongo_connection *conn, mongo_connection_options opts) {
+	item *current = malloc(sizeof(item));
+	current->zone = zone;
+	current->conn = conn;
+	current->opts = opts;
+	current->next = NULL;
+	
+	if (head == NULL) {
+		return current;
+	}
+
+	item *iterator = head;
+	while(iterator->next != NULL) {
+		iterator = iterator->next;
+	}
+	
+	iterator->next = current;
+	return head;
+}
+
+static item *delister(item *head, char *zone) {
+	if (head == NULL) {
+		return NULL;
+	}
+	
+	item *precedent = NULL;
+	item *courant = head;
+	while(courant->next != NULL && strcmp(courant->zone, zone) != 0) {
+		precedent = courant;
+		courant = courant->next;
+	}
+	
+	if (precedent != NULL && strcmp(courant->zone, zone) == 0) {
+		precedent->next = courant->next;
+	} else if (precedent == NULL && strcmp(courant->zone, zone) == 0) {
+		return courant->next;
+	}
+	return head;
+}
+
+static item *chercher(item *head, char *i) {
+	item *iterator = head;
+	while(iterator != NULL && strcmp(iterator->zone, i) != 0) {
+		iterator = iterator->next;
+	}
+	return iterator;
+}
 
 static void mongodb_lock(int what) {
 	static isc_mutex_t lock;
@@ -117,7 +140,7 @@ static void mongodb_lock(int what) {
 int
 mongo_start(void *dbdata) 
 {	
-	mongo_connection *conn = malloc(10 * sizeof(mongo_connection));
+	mongo_connection *conn = malloc(2 * sizeof(mongo_connection));
 	mongo_connection_options opts;
 
 	dbinfo_t *dbi = (dbinfo_t *) dbdata;
@@ -131,7 +154,10 @@ mongo_start(void *dbdata)
 		return 0;
 	}
 	
-	connection_list = enlister(connection_list, isc_thread_self(), conn, opts);
+	mongodb_lock(1);
+	connection_list = delister(connection_list, dbi->zone);
+	connection_list = enlister(connection_list, dbi->zone, conn, opts);
+	mongodb_lock(-1);
 	
 	printf("Connected to MongoDB\n");
 	return 1;
@@ -170,13 +196,14 @@ find_in_array(bson_iterator *it, const char *key_ref, const char *value_ref, con
 int 
 find_bind_options(void *dbdata, const char *mac, char *dhcp) 
 {
-	item *connection = chercher(connection_list, isc_thread_self());
-	
-	mongo_connection *conn = connection->conn;
-	mongo_connection_options opts = connection->opts;
-
 	dbinfo_t *dbi = (dbinfo_t *) dbdata;
 	
+	mongodb_lock(1);
+	item *connection = chercher(connection_list, dbi->zone);
+	mongodb_lock(-1);
+	
+	mongo_connection *conn = connection->conn;
+
 	bson_buffer bb;
 	
 	bson query;
@@ -209,13 +236,6 @@ find_bind_options(void *dbdata, const char *mac, char *dhcp)
 	return 1;
 }
 
-/*
- * This database operates on relative names.
- *
- * "time" and "@" return the time in a TXT record.  
- * "clock" is a CNAME to "time"
- * "current" is a DNAME to "@" (try time.current.time)
- */ 
 static isc_result_t
 mongodb_lookup(const char *zone, const char *name, void *dbdata,
 	      dns_sdblookup_t *lookup)
@@ -249,9 +269,6 @@ mongodb_lookup(const char *zone, const char *name, void *dbdata,
 	return (ISC_R_SUCCESS);
 }
 
-/*
- * lookup() does not return SOA or NS records, so authority() must be defined.
- */
 static isc_result_t
 mongodb_authority(const char *zone, void *dbdata, dns_sdblookup_t *lookup) {
 	isc_result_t result;
@@ -299,7 +316,7 @@ mongodb_create(const char *zone,
 {
     dbinfo_t *dbi;
     isc_result_t result;
-
+    
     UNUSED(zone);
     UNUSED(driverdata);
 
@@ -319,6 +336,8 @@ mongodb_create(const char *zone,
     dbi->ip    		= NULL;
     dbi->search_prefix   = "";
     dbi->result_suffix   = "";
+    
+    dbi->zone   = zone;
     
     STRDUP_OR_FAIL(dbi->host, argv[0]);
     STRDUP_OR_FAIL(dbi->port, argv[1]);
@@ -351,13 +370,13 @@ mongodb_destroy(const char *zone, void *driverdata, void **dbdata)
     UNUSED(driverdata);
 		UNUSED(dbdata);
 		
-    //mongo_destroy(conn);
+	 	mongodb_lock(1);
+		item *connection = chercher(connection_list, zone);
+		mongodb_lock(-1);
+	
+		mongo_destroy(connection->conn);
 }
 
-/*
- * This zone does not support zone transfer, so allnodes() is NULL.  There
- * is no database specific data, so create() and destroy() are NULL.
- */
 static dns_sdbmethods_t mongodb_methods = {
 	mongodb_lookup,
 	mongodb_authority,
@@ -366,13 +385,10 @@ static dns_sdbmethods_t mongodb_methods = {
 	mongodb_destroy	/* destroy */
 };
 
-/*
- * Wrapper around dns_sdb_register().
- */
 isc_result_t
 mongodb_init(void) {
 	unsigned int flags;
-	flags = DNS_SDBFLAG_RELATIVEOWNER | DNS_SDBFLAG_RELATIVERDATA;
+	flags = DNS_SDBFLAG_RELATIVEOWNER | DNS_SDBFLAG_RELATIVERDATA | DNS_SDBFLAG_THREADSAFE;
 	
 	mongodb_lock(0);
 	
@@ -380,9 +396,6 @@ mongodb_init(void) {
 				 ns_g_mctx, &mongodb));
 }
 
-/*
- * Wrapper around dns_sdb_unregister().
- */
 void
 mongodb_clear(void) {
 	if (mongodb != NULL)

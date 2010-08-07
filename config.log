@@ -33,7 +33,7 @@ PATH: /usr/sbin
 PATH: /usr/bin
 PATH: /sbin
 PATH: /bin
-PATH: /usr/X11R6/bin
+PATH: /usr/games
 
 
 ## ----------- ##
@@ -671,7 +671,7 @@ configure:21112: $? = 0
 configure:21127: result: yes
 configure:21137: checking for sysctlbyname
 configure:21193: gcc -o conftest -g -O2  -D_GNU_SOURCE  conftest.c  >&5
-/tmp/cco7jixC.o: In function `main':
+/tmp/cciqh8RD.o: In function `main':
 /home/guillaume/github/bind-9.7.1-P2/conftest.c:61: undefined reference to `sysctlbyname'
 collect2: ld returned 1 exit status
 configure:21200: $? = 1
@@ -1188,7 +1188,7 @@ configure: failed program was:
 configure:22270: result: no
 configure:22290: checking for kqueue
 configure:22346: gcc -o conftest -g -O2  -D_GNU_SOURCE  conftest.c  >&5
-/tmp/ccZAQTbt.o: In function `main':
+/tmp/ccqUfeYq.o: In function `main':
 /home/guillaume/github/bind-9.7.1-P2/conftest.c:69: undefined reference to `kqueue'
 collect2: ld returned 1 exit status
 configure:22353: $? = 1
@@ -1537,7 +1537,7 @@ configure:24102: checking for /dev/random
 configure:24119: result: yes
 configure:24152: checking for arc4random
 configure:24208: gcc -o conftest -g -O2  -D_GNU_SOURCE  conftest.c  >&5
-/tmp/ccFcLnhR.o: In function `main':
+/tmp/ccPZNmUT.o: In function `main':
 /home/guillaume/github/bind-9.7.1-P2/conftest.c:73: undefined reference to `arc4random'
 collect2: ld returned 1 exit status
 configure:24215: $? = 1
@@ -2390,7 +2390,7 @@ configure: failed program was:
 configure:28750: result: not match any subspecies; assume standard definition
 configure:28760: checking for getipnodebyname
 configure:28816: gcc -o conftest -g -O2 -I/usr/include/libxml2  -D_GNU_SOURCE  conftest.c  -lxml2 >&5
-/tmp/ccA3GjeL.o: In function `main':
+/tmp/ccuTCs9p.o: In function `main':
 /home/guillaume/github/bind-9.7.1-P2/conftest.c:83: undefined reference to `getipnodebyname'
 collect2: ld returned 1 exit status
 configure:28823: $? = 1
@@ -2515,7 +2515,7 @@ configure:29600: $? = 0
 configure:29620: result: yes
 configure:29636: checking for strlcpy
 configure:29692: gcc -o conftest -g -O2 -I/usr/include/libxml2  -D_GNU_SOURCE  conftest.c  -lxml2 >&5
-/tmp/cc13Nr38.o: In function `main':
+/tmp/cc4gz3rh.o: In function `main':
 /home/guillaume/github/bind-9.7.1-P2/conftest.c:86: undefined reference to `strlcpy'
 collect2: ld returned 1 exit status
 configure:29699: $? = 1
@@ -2612,7 +2612,7 @@ configure: failed program was:
 configure:29719: result: no
 configure:29729: checking for strlcat
 configure:29785: gcc -o conftest -g -O2 -I/usr/include/libxml2  -D_GNU_SOURCE  conftest.c  -lxml2 >&5
-/tmp/ccG0lUos.o: In function `main':
+/tmp/ccrWMSCA.o: In function `main':
 /home/guillaume/github/bind-9.7.1-P2/conftest.c:86: undefined reference to `strlcat'
 collect2: ld returned 1 exit status
 configure:29792: $? = 1
@@ -3071,7 +3071,6 @@ config.status:1122: creating doc/doxygen/Doxyfile
 config.status:1122: creating doc/doxygen/Makefile
 config.status:1122: creating doc/doxygen/doxygen-input-filter
 config.status:1122: creating config.h
-config.status:1343: config.h is unchanged
 config.status:1361: executing chmod commands
 
 ## ---------------- ##
