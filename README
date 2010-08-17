@@ -78,5 +78,11 @@ zone "0.168.192.in-addr.arpa" {
 192.168.0. is the search prefix. (query : { "computers.ip" : "192.168.0.8" })
 .zone.fr. is the suffix added to result
 
+TODO :
+* Handle lb._dns-sd._udp and others requests
+* Better handling of reconnect (free memory !)
+* Replica set
+* Log level
+
 (c) Guillaume Rose
 Under the same licence as Bind
