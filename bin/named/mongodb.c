@@ -69,7 +69,7 @@ static dns_sdbimplementation_t *mongodb = NULL;
 static item *connection_list = NULL;
 
 
-static item *enlister(item *head, char *zone, mongo_connection *conn, mongo_connection_options opts) {
+static item *add_connection(item *head, char *zone, mongo_connection *conn, mongo_connection_options opts) {
 	item *current = malloc(sizeof(item));
 	current->zone = zone;
 	current->conn = conn;
@@ -90,7 +90,7 @@ static item *enlister(item *head, char *zone, mongo_connection *conn, mongo_conn
 	return head;
 }
 
-static item *delister(item *head, char *zone) {
+static item *remove_connection(item *head, char *zone) {
 	if (head == NULL) {
 		return NULL;
 	}
@@ -110,7 +110,7 @@ static item *delister(item *head, char *zone) {
 	return head;
 }
 
-static item *chercher(item *head, char *i) {
+static item *find_connection(item *head, char *i) {
 	item *iterator = head;
 	while(iterator != NULL && strcmp(iterator->zone, i) != 0) {
 		iterator = iterator->next;
@@ -152,8 +152,8 @@ mongo_start(void *dbdata)
 	}
 
 	mongodb_lock(1);
-	connection_list = delister(connection_list, dbi->zone);
-	connection_list = enlister(connection_list, dbi->zone, conn, opts);
+	connection_list = remove_connection(connection_list, dbi->zone);
+	connection_list = add_connection(connection_list, dbi->zone, conn, opts);
 	mongodb_lock(-1);
 
 	printf("Connected to MongoDB\n");
@@ -196,13 +196,13 @@ find_bind_options(void *dbdata, const char *mac, char *dhcp)
 	dbinfo_t *dbi = (dbinfo_t *) dbdata;
 
 	mongodb_lock(1);
-	item *connection = chercher(connection_list, dbi->zone);
+	item *connection = find_connection(connection_list, dbi->zone);
 	mongodb_lock(-1);
 
 	if (connection == NULL) {
 		mongo_start(dbdata);
 		mongodb_lock(1);
-		connection = chercher(connection_list, dbi->zone);
+		connection = find_connection(connection_list, dbi->zone);
 		mongodb_lock(-1);
 		if (connection == NULL)
 			return 0;
@@ -378,7 +378,7 @@ mongodb_destroy(const char *zone, void *driverdata, void **dbdata)
 	UNUSED(dbdata);
 
 	mongodb_lock(1);
-	item *connection = chercher(connection_list, zone);
+	item *connection = find_connection(connection_list, zone);
 	mongodb_lock(-1);
 
 	mongo_destroy(connection->conn);
