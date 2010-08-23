@@ -68,7 +68,6 @@ typedef struct list {
 static dns_sdbimplementation_t *mongodb = NULL;
 static item *connection_list = NULL;
 
-
 static item *add_connection(item *head, char *zone, mongo_connection *conn, mongo_connection_options opts) {
 	item *current = malloc(sizeof(item));
 	current->zone = zone;
@@ -160,8 +159,13 @@ mongo_start(void *dbdata)
 	return 1;
 }
 
+void find_lookup_query(bson_iterator *, const char *, const char *, const char *, char *);
+int build_lookup_query(void *, const char *, char *);
+void find_allnodes_query(bson_iterator *, const char *, const char *, dbinfo_t *, dns_sdballnodes_t *);
+int build_allnodes_query(void *, dns_sdballnodes_t *);
+
 void 
-find_in_array(bson_iterator *it, const char *key_ref, const char *value_ref, const char *key_needed, char *value_needed) 
+find_lookup_query(bson_iterator *it, const char *key_ref, const char *value_ref, const char *key_needed, char *value_needed) 
 {
 	char value_ref_found[MONGO_STRING_LENGTH];
 	char value_needed_found[MONGO_STRING_LENGTH];
@@ -179,7 +183,7 @@ find_in_array(bson_iterator *it, const char *key_ref, const char *value_ref, con
 			case bson_object:
 			case bson_array:
 				bson_iterator_init(&i, bson_iterator_value(it));
-				find_in_array(&i, key_ref, value_ref, key_needed, value_needed);
+				find_lookup_query(&i, key_ref, value_ref, key_needed, value_needed);
 				break;
 			default:
 				break;
@@ -191,7 +195,7 @@ find_in_array(bson_iterator *it, const char *key_ref, const char *value_ref, con
 }
 
 int 
-find_bind_options(void *dbdata, const char *mac, char *dhcp) 
+build_lookup_query(void *dbdata, const char *mac, char *dhcp) 
 {
 	dbinfo_t *dbi = (dbinfo_t *) dbdata;
 
@@ -238,7 +242,7 @@ find_bind_options(void *dbdata, const char *mac, char *dhcp)
 	bson_iterator it;
 	bson_iterator_init(&it, result.data);
 
-	find_in_array(&it, dbi->dns, mac, dbi->ip, dhcp);
+	find_lookup_query(&it, dbi->dns, mac, dbi->ip, dhcp);
 	return 1;
 }
 
@@ -262,8 +266,7 @@ mongodb_lookup(const char *zone, const char *name, void *dbdata,
 
 	char option_buffer[MONGO_STRING_LENGTH] = "";
 
-	if (find_bind_options(dbdata, reference, option_buffer)) {
-		
+	if (build_lookup_query(dbdata, reference, option_buffer)) {
 		printf("DNS entry found for %s : %s\n", name, option_buffer);
 		result = dns_sdb_putrr(lookup, dbi->request_type, 86400, option_buffer);
 		if (result != ISC_R_SUCCESS)
@@ -275,12 +278,109 @@ mongodb_lookup(const char *zone, const char *name, void *dbdata,
 	return (ISC_R_SUCCESS);
 }
 
+void 
+find_allnodes_query(bson_iterator *it, const char *key, const char *value, dbinfo_t *dbi, dns_sdballnodes_t *allnodes) 
+{
+	char value_ref_found[MONGO_STRING_LENGTH];
+	char value_needed_found[MONGO_STRING_LENGTH];
+
+	bson_iterator i;
+
+	while(bson_iterator_next(it)) {
+		switch(bson_iterator_type(it)){
+			case bson_string:
+				if (strcmp(bson_iterator_key(it), key) == 0)
+					strcpy(value_ref_found, bson_iterator_string(it));
+				if (strcmp(bson_iterator_key(it), value) == 0)
+					strcpy(value_needed_found, bson_iterator_string(it));
+				break;
+			case bson_object:
+			case bson_array:
+				bson_iterator_init(&i, bson_iterator_value(it));
+				find_allnodes_query(&i, key, value, dbi, allnodes);
+				break;
+			default:
+				break;
+		}
+	}
+
+	if (strcmp(value_ref_found, "") != 0 && strcmp(value_needed_found, "") != 0) {
+		char *prefix = strndup(value_ref_found, strlen(dbi->search_prefix));
+   		char *suffix = strndup(value_ref_found + strlen(value_ref_found) - strlen(dbi->search_suffix), strlen(dbi->search_suffix));
+   		
+  		// printf("(%s, %s) with prefix, suffix %s, %s\n", value_ref_found, value_needed_found, prefix, suffix);
+  		
+  		if (strcmp(prefix, dbi->search_prefix) == 0 && strcmp(suffix, dbi->search_suffix) == 0) {
+  			printf("(%s, %s) : OK\n", value_ref_found, value_needed_found);
+  			if (strcmp("PTR", dbi->request_type) == 0) {
+  				char *ip = strndup(value_ref_found + strlen(prefix), strlen(value_ref_found) - strlen(suffix));
+  				dns_sdb_putnamedrr(allnodes, ip, dbi->request_type, 86400, value_needed_found);
+  			} 
+  			else {
+				dns_sdb_putnamedrr(allnodes, value_ref_found, dbi->request_type, 86400, value_needed_found);
+			}
+		}
+	}
+}
+
+int 
+build_allnodes_query(void *dbdata, dns_sdballnodes_t *allnodes) 
+{
+	dbinfo_t *dbi = (dbinfo_t *) dbdata;
+
+	mongodb_lock(1);
+	item *connection = find_connection(connection_list, dbi->zone);
+	mongodb_lock(-1);
+
+	if (connection == NULL) {
+		mongo_start(dbdata);
+		mongodb_lock(1);
+		connection = find_connection(connection_list, dbi->zone);
+		mongodb_lock(-1);
+		if (connection == NULL)
+			return 0;
+	}
+
+	mongo_connection *conn = connection->conn;
+	mongo_cursor *cursor = NULL;
+	
+	bson_buffer bb;
+
+	bson query;
+	bson field;
+	bson result;
+	
+	char reference[MONGO_STRING_LENGTH];
+	sprintf(reference, "%s(.*)%s", dbi->search_prefix, dbi->search_suffix);
+	
+	bson_buffer_init(&bb);
+	bson_append_regex(&bb, dbi->search, reference, "");
+	bson_from_buffer(&query, &bb);
+	
+	bson_empty(&field);
+	bson_empty(&result);
+
+	MONGO_TRY{
+		cursor = mongo_find(conn, dbi->base, &query, &field, 0, 0, 0);
+	}MONGO_CATCH{
+		mongo_start(dbdata);
+		return 0;
+	}
+
+    while (mongo_cursor_next(cursor)){
+        bson_iterator it;
+        bson_iterator_init(&it, cursor->current.data);  
+		find_allnodes_query(&it, dbi->dns, dbi->ip, dbi, allnodes);
+	}
+	
+	return 1;
+}
+
 static isc_result_t
 mongodb_allnodes(const char *zone, void *dbdata, dns_sdballnodes_t *allnodes) {
         isc_result_t result;
-
+        
         UNUSED(zone);
-        UNUSED(dbdata);
 
         result = dns_sdb_putnamedrr(allnodes, "@", "NS", 86400, "ns1.minet.net.");
         if (result != ISC_R_SUCCESS)
@@ -289,11 +389,8 @@ mongodb_allnodes(const char *zone, void *dbdata, dns_sdballnodes_t *allnodes) {
         result = dns_sdb_putnamedrr(allnodes, "@", "NS", 86400, "ns2.minet.net.");
         if (result != ISC_R_SUCCESS)
                 return (ISC_R_FAILURE);
-
-//        result = dns_sdb_putnamedrr(allnodes, "rose-gui.maisel.int-evry.fr.", "A", 86400, "157.159.40.10");
-//        if (result != ISC_R_SUCCESS)
-//                return (ISC_R_FAILURE);
-
+                
+        build_allnodes_query(dbdata, allnodes);
 
         return (ISC_R_SUCCESS);
 }
@@ -361,10 +458,10 @@ mongodb_create(const char *zone,
 	dbi->port    	= NULL;
 	dbi->request_type = NULL;
 	dbi->base 		= NULL;
-	dbi->search   = NULL;
-	dbi->dns 			= NULL;
+	dbi->search   	= NULL;
+	dbi->dns 		= NULL;
 	dbi->ip    		= NULL;
-	dbi->search_prefix   = "";
+	dbi->search_prefix = "";
 	dbi->search   = "";
 
 	dbi->zone   = zone;
@@ -393,7 +490,7 @@ mongodb_create(const char *zone,
 	*dbdata = dbi;
 
 	// Connect only if needed
-	//mongo_start(dbi);
+	// mongo_start(dbi);
 
 	return (ISC_R_SUCCESS);
 
@@ -417,8 +514,8 @@ mongodb_destroy(const char *zone, void *driverdata, void **dbdata)
 }
 
 static dns_sdbmethods_t mongodb_methods = {
-	mongodb_lookup,
-	mongodb_authority,
+	mongodb_lookup, /* lookup */
+	mongodb_authority, /* authority */
 	mongodb_allnodes, /* allnodes */
 	mongodb_create,	/* create */
 	mongodb_destroy	/* destroy */
