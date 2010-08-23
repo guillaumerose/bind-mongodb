@@ -23,11 +23,11 @@ Bind will search in your collection in your db an entry like this :
   "password" : "password (radius for instance)",
   "computers" : [
     {
-      "dns" : "subdomain",
+      "dns" : "subdomain.myzone.eu.",
       "ip" : "192.168.1.14"
     },
     {
-      "dns" : "othersubdomain",
+      "dns" : "othersubdomain.myzone.eu.",
       "ip" : "192.168.1.15"
     }
   ]
@@ -35,8 +35,8 @@ Bind will search in your collection in your db an entry like this :
 
 Configuration :
 zone "myzone.eu" {
-	 type master;
-   database "time 127.0.0.1 27017 A production.users computers.dns dns ip";
+	type master;
+	database "time 127.0.0.1 27017 A production.users computers.dns dns ip NULL .myzone.eu.";
 };
 
 where 
@@ -47,18 +47,20 @@ where
 * computers.dns, path in document to find data,
 * dns, request field to match
 * ip, answer field
+* search prefix
+* search suffix
 
 OR
 
 {
-	"dns" : "subdomain",
+	"dns" : "subdomain.zone.fr.",
 	"ip" : "192.168.0.1"
 }
 
 Configuration :
 zone "myzone.eu" {
-	 type master;
-   database "time 127.0.0.1 27017 A production.users dns dns ip";
+	type master;
+	database "time 127.0.0.1 27017 A production.users dns dns ip";
 };
 
 Reverse dns and data dpulication
@@ -66,17 +68,18 @@ Reverse dns and data dpulication
 To avoid duplication you can declare your zones like this :
 
 zone "zone.fr" {
-	 type master;
-   database "mongo 127.0.0.1 27017 A production.users computers.dns dns ip";
+	type master;
+	database "mongo 127.0.0.1 27017 A production.users computers.dns dns ip NULL .zone.fr.";
 };
 
 zone "0.168.192.in-addr.arpa" {
-	 type master;
-   database "mongo 127.0.0.1 27017 PTR production.users computers.ip ip dns 192.168.0. .zone.fr."; 
+	type master;
+	database "mongo 127.0.0.1 27017 PTR production.users computers.ip ip dns 192.168.0. NULL"; 
 };
 
-192.168.0. is the search prefix. (query : { "computers.ip" : "192.168.0.8" })
-.zone.fr. is the suffix added to result
+The two last arguments are the search prefix and the search suffix. 
+Query looks like { "computers.ip" : "[PREFIX]8[SUFFIX]" }) for "nslookup 192.168.0.8"
+
 
 TODO :
 * Handle lb._dns-sd._udp and others requests
