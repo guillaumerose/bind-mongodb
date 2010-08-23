@@ -53,7 +53,7 @@ typedef struct _dbinfo {
 	char *request_type;
 
 	char *search_prefix;
-	char *result_suffix;
+	char *search_suffix;
 
 	char *zone;
 } dbinfo_t;
@@ -110,7 +110,7 @@ static item *remove_connection(item *head, char *zone) {
 	return head;
 }
 
-static item *find_connection(item *head, char *i) {
+static item *find_connection(item *head, const char *i) {
 	item *iterator = head;
 	while(iterator != NULL && strcmp(iterator->zone, i) != 0) {
 		iterator = iterator->next;
@@ -255,15 +255,15 @@ mongodb_lookup(const char *zone, const char *name, void *dbdata,
 	if (strcmp(name, "@") == 0)
 		return (ISC_R_SUCCESS);
 
-	printf("Search prefix : \"%s\", result suffix : \"%s\"\n", dbi->search_prefix, dbi->result_suffix); 
+	printf("Search prefix : \"%s\", suffix : \"%s\"\n", dbi->search_prefix, dbi->search_suffix); 
 
 	char reference[MONGO_STRING_LENGTH];
-	sprintf(reference, "%s%s", dbi->search_prefix, name);
+	sprintf(reference, "%s%s%s", dbi->search_prefix, name,  dbi->search_suffix);
 
 	char option_buffer[MONGO_STRING_LENGTH] = "";
 
 	if (find_bind_options(dbdata, reference, option_buffer)) {
-		sprintf(option_buffer, "%s%s", option_buffer, dbi->result_suffix);
+		
 		printf("DNS entry found for %s : %s\n", name, option_buffer);
 		result = dns_sdb_putrr(lookup, dbi->request_type, 86400, option_buffer);
 		if (result != ISC_R_SUCCESS)
@@ -365,7 +365,7 @@ mongodb_create(const char *zone,
 	dbi->dns 			= NULL;
 	dbi->ip    		= NULL;
 	dbi->search_prefix   = "";
-	dbi->result_suffix   = "";
+	dbi->search   = "";
 
 	dbi->zone   = zone;
 
@@ -379,9 +379,17 @@ mongodb_create(const char *zone,
 
 	if (argc > 7) {
 		STRDUP_OR_FAIL(dbi->search_prefix, argv[7]);
-		STRDUP_OR_FAIL(dbi->result_suffix, argv[8]);
+		STRDUP_OR_FAIL(dbi->search_suffix, argv[8]);
 	}
-
+	
+	if (strcmp(dbi->search_prefix, "NULL") == 0) {
+		dbi->search_prefix = "";
+	}
+	
+	if (strcmp(dbi->search_suffix, "NULL") == 0) {
+		dbi->search_suffix = "";
+	}
+	
 	*dbdata = dbi;
 
 	// Connect only if needed
@@ -432,4 +440,3 @@ mongodb_clear(void) {
 	if (mongodb != NULL)
 		dns_sdb_unregister(&mongodb);
 }
-
