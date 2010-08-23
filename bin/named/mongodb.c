@@ -253,7 +253,7 @@ mongodb_lookup(const char *zone, const char *name, void *dbdata,
 	UNUSED(dbdata);
 
 	if (strcmp(name, "@") == 0)
-		return (ISC_R_NOTFOUND);
+		return (ISC_R_SUCCESS);
 
 	printf("Search prefix : \"%s\", result suffix : \"%s\"\n", dbi->search_prefix, dbi->result_suffix); 
 
@@ -276,6 +276,30 @@ mongodb_lookup(const char *zone, const char *name, void *dbdata,
 }
 
 static isc_result_t
+mongodb_allnodes(const char *zone, void *dbdata, dns_sdballnodes_t *allnodes) {
+        isc_result_t result;
+
+        UNUSED(zone);
+        UNUSED(dbdata);
+
+        result = dns_sdb_putnamedrr(allnodes, "@", "NS", 86400, "ns1.minet.net.");
+        if (result != ISC_R_SUCCESS)
+                return (ISC_R_FAILURE);
+
+        result = dns_sdb_putnamedrr(allnodes, "@", "NS", 86400, "ns2.minet.net.");
+        if (result != ISC_R_SUCCESS)
+                return (ISC_R_FAILURE);
+
+//        result = dns_sdb_putnamedrr(allnodes, "rose-gui.maisel.int-evry.fr.", "A", 86400, "157.159.40.10");
+//        if (result != ISC_R_SUCCESS)
+//                return (ISC_R_FAILURE);
+
+
+        return (ISC_R_SUCCESS);
+}
+
+
+static isc_result_t
 mongodb_authority(const char *zone, void *dbdata, dns_sdblookup_t *lookup) {
 	isc_result_t result;
 
@@ -291,7 +315,7 @@ mongodb_authority(const char *zone, void *dbdata, dns_sdblookup_t *lookup) {
 
 	strftime(buffer, 11, "%Y%m%d01", timeinfo);
 
-	result = dns_sdb_putsoa(lookup, "ns2.minet.net.", "dns.minet.net.", atoi(buffer)); //  YYYYMMDDXX
+	result = dns_sdb_putsoa(lookup, "ns1.minet.net.", "dns.minet.net.", atoi(buffer)); //  YYYYMMDDXX
 	if (result != ISC_R_SUCCESS)
 		return (ISC_R_FAILURE);
 
@@ -387,7 +411,7 @@ mongodb_destroy(const char *zone, void *driverdata, void **dbdata)
 static dns_sdbmethods_t mongodb_methods = {
 	mongodb_lookup,
 	mongodb_authority,
-	NULL,	/* allnodes */
+	mongodb_allnodes, /* allnodes */
 	mongodb_create,	/* create */
 	mongodb_destroy	/* destroy */
 };
