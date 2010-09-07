@@ -243,6 +243,11 @@ build_lookup_query(void *dbdata, const char *mac, char *dhcp)
 	bson_iterator_init(&it, result.data);
 
 	find_lookup_query(&it, dbi->dns, mac, dbi->ip, dhcp);
+
+        bson_destroy(&query);
+        bson_destroy(&field);
+        bson_destroy(&result);
+
 	return 1;
 }
 
@@ -367,12 +372,17 @@ build_allnodes_query(void *dbdata, dns_sdballnodes_t *allnodes)
 		return 0;
 	}
 
-    while (mongo_cursor_next(cursor)){
-        bson_iterator it;
-        bson_iterator_init(&it, cursor->current.data);  
+    	while (mongo_cursor_next(cursor)){
+        	bson_iterator it;
+        	bson_iterator_init(&it, cursor->current.data);  
 		find_allnodes_query(&it, dbi->dns, dbi->ip, dbi, allnodes);
 	}
-	
+		
+        mongo_cursor_destroy(cursor);
+
+        bson_destroy(&query);
+        bson_destroy(&field);
+
 	return 1;
 }
 
