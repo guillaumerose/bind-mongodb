@@ -1,3 +1,6 @@
+EDIT: This version contains leaks, I rewrite this with REST api.
+https://github.com/guillaumerose/bind-http-json
+
 MongoDB module for Bind9 (lastest version)
 This is just a simple hack in order to use MongoDB as database
 (instead of LDAP).
