@@ -1,0 +1,84 @@
+h1. MongoDB configuration for Bind9
+
+This is just a simple hack in order to use MongoDB as database with a REST backend.
+
+h2. Install :
+
+p. 
+
+* Install libcurl-dev and json-c library
+* Clone git://github.com/guillaumerose/bind-http-json.git
+* Build as usual
+  * ./configure
+  * make
+  * make install
+* Run named with following configuration and web server
+
+h2. Sample configuration :
+
+bc.. controls { /* empty */ };
+
+options {
+  directory "/var/cache/bind";
+
+  allow-transfer { any; };
+  // auth-nxdomain no;
+  listen-on-v6 { any; };
+};
+
+zone "example.com" {
+  type master;
+  database "remote http://127.0.0.1:4567";
+};
+
+p. 
+
+h2. Ruby server :
+
+bc.. require 'rubygems'
+require 'mongo'
+require 'sinatra'
+
+db = Mongo::Connection.new('flame.local.mongohq.com', 27078).db('development')
+db.authenticate("***", "***")
+coll = db.collection('data')
+
+get '/example.com/lookup' do
+  content_type "application/json"
+  
+  entry = coll.find_one({"name" =>  params[:name]})
+  
+  return '{}' if entry.nil?
+  
+  '{"type" : "' + entry['type'] + '", "field" : "' + entry['value'] + '"}'
+end
+
+get '/example.com/authority' do
+  content_type "application/json"
+  
+  '{
+      "data" : [
+          {
+              "type" : "SOA",
+              "field" : [
+                  "ns1.example.com.",
+                  "dns.example.com.",
+                  2010122701
+              ]
+          },
+          {
+              "type" : "NS",
+              "field" : "ns1.example.com."
+          },
+          {
+              "type" : "NS",
+              "field" : "ns2.example.com."
+          }
+      ]
+  }'
+end
+
+p. This server assumes that your document look like { "name" : "www", "type" : "A", "value" : "192.168.0.1"}
+
+(c) Guillaume Rose
+Under the same licence as Bind
