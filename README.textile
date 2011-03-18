@@ -78,7 +78,7 @@ get '/example.com/authority' do
   }'
 end
 
-p. This server assumes that your document look like { "name" : "www", "type" : "A", "value" : "192.168.0.1"}
+p. This server assumes that your document looks like { "name" : "www", "type" : "A", "value" : "192.168.0.1"}
 
 (c) Guillaume Rose
 Under the same licence as Bind
